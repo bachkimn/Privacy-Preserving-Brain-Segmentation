@@ -39,10 +39,11 @@ def main():
 	save_dir = args.save_dir
 	if os.path.exists(save_dir) == False:
 		os.mkdir(save_dir)
-
-	vis_image = args.vis + '/T1.nii.gz'
-	vis_segmap = args.vis + '/segmap.nii.gz'
 	
+	if args.vis != None:
+		vis_image = args.vis + '/T1.nii.gz'
+		vis_segmap = args.vis + '/segmap.nii.gz'
+
 	enc_path = args.encoder
 	dis_path = args.dis
 	seg_path = args.seg
