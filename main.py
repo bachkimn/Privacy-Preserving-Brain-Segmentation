@@ -20,9 +20,13 @@ from vis import vis_image as vis
 def main():
 	'''Configuration'''
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--batch_size', type=int)
-	parser.add_argument('--LAMBDA', type=int)
-	parser.add_argument('--save_dir', type=str)
+	parser.add_argument('--batch_size', type = int)
+	parser.add_argument('--LAMBDA', type = int)
+	parser.add_argument('--save_dir', type = str)
+	parser.add_argument('--encoder', type = str, default = None)
+	parser.add_argument('--dis', type = str, default = None)
+	parser.add_argument('--seg', type = str, default = None)
+	parser.add_argument('--vis', type = str, default = None)
 	args = parser.parse_args()
 	
 	LAMBDA = args.LAMBDA
@@ -36,12 +40,13 @@ def main():
 	if os.path.exists(save_dir) == False:
 		os.mkdir(save_dir)
 
-	vis_image = '/export/livia/home/vision/bngoc/PPMI/train/14426_BL_00/T1.nii.gz'
-	vis_segmap = '/export/livia/home/vision/bngoc/PPMI/train/14426_BL_00/segmap.nii.gz'
+	vis_image = args.vis + '/T1.nii.gz'
+	vis_segmap = args.vis + '/segmap.nii.gz'
 	
-	enc_path = '/export/livia/home/vision/bngoc/end2end/pretrained/autoencoder.pt'
-	dis_path = '/export/livia/home/vision/bngoc/end2end/pretrained/discriminator.pth'
-	seg_path = '/export/livia/home/vision/bngoc/end2end/pretrained/segmentation.pt'
+	enc_path = args.encoder
+	dis_path = args.dis
+	seg_path = args.seg
+	
 	'''Initialize dataset'''
 	train_set = ppmi_pairs(mode = 'train')
 	val_set = ppmi_pairs(mode = 'val')
@@ -49,15 +54,21 @@ def main():
 	'''Initialize networks'''	
 	# init model encrypter
 	Encrypter = encoder(1,1,16).to(device)
-	Encrypter.load_state_dict(torch.load(enc_path, map_location=device))
+	if enc_path != None:
+		print('-> Loaded pre-trained:{}'.format(enc_path))
+		Encrypter.load_state_dict(torch.load(enc_path, map_location=device))
 	Encrypter.train()
 	# init discriminator
 	Discriminator = discriminator().to(device)
-	Discriminator.load_state_dict(torch.load(dis_path, map_location=device))
+	if dis_path != None:
+		print('-> Loaded pre-trained:{}'.format(dis_path))
+		Discriminator.load_state_dict(torch.load(dis_path, map_location=device))
 	Discriminator.train()
 	# init segmentator
 	Segmentator = segnet(1,6,32).to(device)
-	Segmentator.load_state_dict(torch.load(seg_path, map_location=device))
+	if seg_path != None:
+		print('-> Loaded pre-trained:{}'.format(seg_path))
+		Segmentator.load_state_dict(torch.load(seg_path, map_location=device))
 	Segmentator.train()
 	#
 	models = {'enc': Encrypter, 'seg': Segmentator, 'dis': Discriminator}
@@ -142,7 +153,8 @@ def main():
 
 			'''plot ms-ssim'''
 			plot_mssim(models, val_set, device, save_dir, epoch + 1)
-			vis(models, vis_image, vis_segmap, device, save_dir, epoch + 1)
+			if os.path.exists(vis_image) == True:
+				vis(models, vis_image, vis_segmap, device, save_dir, epoch + 1)
 		if (epoch + 1) % 25 == 0:
 			'''save models'''
 			models_dir = os.path.join(save_dir,'models')

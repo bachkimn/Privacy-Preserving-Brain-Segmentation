@@ -6,15 +6,20 @@ from random import randint, choice
 from torch.utils.data import Dataset, DataLoader
 from ultils import *
 
+#config dataset
+train_data_folder = ''
+val_data_folder = ''
+brain_mask = ''
+
 class ppmi_pairs(Dataset):
 	def __init__(self, mode = 'train', ratio = 0.5):
 		self.mode = mode
 		self.ratio = ratio
 		
 		if self.mode == 'train':
-			self.data_folder = '/export/livia/home/vision/bngoc/PPMI/train'
+			self.data_folder = train_data_folder
 		elif self.mode == 'val':
-			self.data_folder = '/export/livia/home/vision/bngoc/PPMI/val'
+			self.data_folder = val_data_folder
 		
 		self.im_list = os.listdir(self.data_folder)
 		self.positives, self.negatives = get_examples(self.im_list)
@@ -72,7 +77,7 @@ class ppmi_pairs(Dataset):
 
 def gen_crop_point():
 	points = []
-	msk = nib.load('/export/livia/home/vision/bngoc/PPMI/train/14426_BL_00/segmap.nii.gz').get_data()
+	msk = nib.load(brain_mask).get_data()
 	for x in range(32,144-32):
 		for y in range(32,192-32):
 			for z in range(32,160-32):
